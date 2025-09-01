@@ -7,14 +7,14 @@
   <style>
     :root { --bg:#0b0f17; --card:#121826; --muted:#9fb0c5; --accent:#2dd4bf; }
     body{ margin:0; font-family:system-ui,Segoe UI,Roboto,Arial; background:var(--bg); color:#e6edf5; }
-    .wrap{ max-width:920px; margin:40px auto; padding:0 16px; }
+    .wrap{ max-width:980px; margin:40px auto; padding:0 16px; }
     .grid{ display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap:14px; }
     .card{ background:var(--card); border-radius:16px; padding:18px; box-shadow:0 8px 24px rgba(0,0,0,.35); }
     h1{ font-weight:700; font-size:24px; margin:0 0 12px; }
     h2{ font-weight:650; font-size:18px; margin:0 0 10px; color:var(--muted); }
     label{ display:block; font-size:13px; color:var(--muted); margin:10px 0 6px; }
     input, select{ width:100%; padding:10px 12px; border-radius:10px; border:1px solid #22314a; background:#0f1524; color:#fff; }
-    .row{ display:flex; gap:10px; }
+    .row{ display:flex; gap:10px; flex-wrap:wrap; }
     .btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px;
           padding:10px 14px; border-radius:12px; border:1px solid #23314b; background:#111827;
           color:#fff; cursor:pointer; transition:transform .06s ease; }
@@ -24,15 +24,16 @@
     small{ color:var(--muted); }
     .footer{ margin-top:16px; color:var(--muted); font-size:12px; }
     .pill{ display:inline-block; background:#0d213a; color:#b7c7de; padding:4px 8px; border-radius:999px; font-size:12px; margin-left:8px;}
+    .cols{ display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:14px; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <h1>LED Controller – Animations <span class="pill">Local UI</span></h1>
 
-    <div class="grid">
+    <div class="cols">
       <div class="card">
-        <h2>Paramètres généraux</h2>
+        <h2>Paramètres</h2>
         <label>Durée (secondes)</label>
         <input id="seconds" type="number" value="10" min="1" />
         <label>FPS</label>
@@ -40,12 +41,12 @@
       </div>
 
       <div class="card">
-        <h2>Couleurs (certaines animations)</h2>
+        <h2>Couleurs (pour blink/gradient)</h2>
         <label>Couleur 1 (R,G,B)</label>
         <input id="color1" value="255,0,0" />
         <label>Couleur 2 (R,G,B)</label>
         <input id="color2" value="0,0,255" />
-        <small>Utilisé par blink / gradient (optionnel pour wave/chase).</small>
+        <small>Utilisé par blink / gradient (optionnel pour wave/chase/solid).</small>
       </div>
 
       <div class="card">
@@ -59,7 +60,7 @@
 
     <div class="card" style="margin-top:14px">
       <h2>Lancer une animation</h2>
-      <div class="row" style="flex-wrap:wrap; margin-top:8px">
+      <div class="row" style="margin-top:8px">
         <button class="btn primary" onclick="start('blink')">Blink</button>
         <button class="btn" onclick="start('wave')">Wave</button>
         <button class="btn" onclick="start('chase')">Chase</button>
@@ -69,6 +70,16 @@
         <button class="btn warn" onclick="stopAnim()">STOP</button>
       </div>
       <div id="status" class="footer">Prêt.</div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h2>Personnages (images)</h2>
+      <div class="row" style="margin-top:8px">
+        <button class="btn" onclick="startImage('assets/ryu.png')">Ryu</button>
+        <button class="btn" onclick="startImage('assets/ken.png')">Ken</button>
+        <button class="btn" onclick="startImage('assets/guile.png')">Guile</button>
+      </div>
+      <small>Conseil : images carrées 128×128 (ou plus, redimensionnées), fond transparent si possible.</small>
     </div>
   </div>
 
@@ -87,6 +98,25 @@
       document.getElementById('status').textContent = (js.ok ? '✔️ Démarré: ' : '⚠️ ') + (js.msg || '');
       if (!js.ok) console.warn(js);
     }
+
+    async function startImage(imgPath){
+      const seconds = Number(document.getElementById('seconds').value || 8);
+      const fps = Number(document.getElementById('fps').value || 12);
+      const body = {
+        mode:'image',
+        image: imgPath,
+        seconds, fps,
+        fit:'cover',
+        brightness: 0.7,
+        gamma: 2.0,
+        flipY: false
+      };
+      const r = await fetch('/api/start', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      const js = await r.json();
+      document.getElementById('status').textContent = (js.ok ? '✔️ Démarré: ' : '⚠️ ') + (js.msg || '');
+      if (!js.ok) console.warn(js);
+    }
+
     async function stopAnim(){
       const r = await fetch('/api/stop', { method:'POST' });
       const js = await r.json();
