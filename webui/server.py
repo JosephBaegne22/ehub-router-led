@@ -1,0 +1,85 @@
+# webui/server.py
+import os, sys, subprocess, threading
+from pathlib import Path
+from flask import Flask, request, jsonify, send_from_directory
+
+app = Flask(__name__, static_folder=".", static_url_path="")
+
+# --- Réglages par défaut (tu peux adapter) ---
+PROJECT_ROOT = Path(__file__).resolve().parents[1]   # remonte d'un cran (racine du repo)
+PYTHON = sys.executable                               # utilise l'interpréteur courant
+EXCEL_PATH = str(PROJECT_ROOT / "faker" / "Ecran (2).xlsx")
+ROUTER_HOST = "127.0.0.1"                             # eHuB host (ton routeur écoute local par défaut)
+ROUTER_PORT = "50000"
+
+# Processus d’animation courant (1 à la fois)
+_current_proc = None
+_proc_lock = threading.Lock()
+
+def _start_process(cmd):
+    global _current_proc
+    with _proc_lock:
+        # si un proc tourne déjà -> 409
+        if _current_proc and _current_proc.poll() is None:
+            return False, "Une animation est déjà en cours. Clique d'abord sur STOP."
+        _current_proc = subprocess.Popen(cmd, cwd=str(PROJECT_ROOT))
+        return True, "OK"
+
+def _stop_process():
+    global _current_proc
+    with _proc_lock:
+        if _current_proc and _current_proc.poll() is None:
+            try:
+                _current_proc.terminate()
+            except Exception:
+                pass
+        _current_proc = None
+
+# --------- API ----------
+@app.post("/api/start")
+def api_start():
+    data = request.get_json(force=True, silent=True) or {}
+    mode = data.get("mode", "blink")          # blink|chase|wave|gradient|stars
+    seconds = str(data.get("seconds", 10))
+    fps = str(data.get("fps", 25))
+    color1 = data.get("color1", "255,0,0")
+    color2 = data.get("color2", "0,0,255")
+    density = str(data.get("density", 0.01))  # pour stars
+    bg = data.get("bg", "4,8,16")
+
+    if mode == "stars":
+        cmd = [
+            PYTHON, "faker/stars_player.py",
+            "--excel", EXCEL_PATH,
+            "--host", ROUTER_HOST, "--port", ROUTER_PORT,
+            "--seconds", seconds, "--fps", fps,
+            "--density", density, "--bg", bg
+        ]
+    else:
+        # modes animator: blink/chase/wave/gradient/solid
+        cmd = [
+            PYTHON, "faker/animator_cli.py",
+            "--mode", mode,
+            "--excel", EXCEL_PATH,
+            "--host", ROUTER_HOST, "--port", ROUTER_PORT,
+            "--seconds", seconds, "--fps", fps,
+            "--color1", color1, "--color2", color2
+        ]
+
+    ok, msg = _start_process(cmd)
+    status = 200 if ok else 409
+    return jsonify({"ok": ok, "msg": msg, "cmd": cmd}), status
+
+@app.post("/api/stop")
+def api_stop():
+    _stop_process()
+    return jsonify({"ok": True})
+
+# --------- Page web ----------
+@app.get("/")
+def index():
+    return send_from_directory(app.static_folder, "index.html")
+
+if __name__ == "__main__":
+    # Lancer sur http://localhost:8000
+    app.run(host="127.0.0.1", port=8000, debug=False)
