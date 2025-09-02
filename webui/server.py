@@ -5,7 +5,7 @@ from flask import Flask, request, jsonify, send_from_directory
 app = Flask(__name__, static_folder=".", static_url_path="")
 
 # --- Réglages par défaut ---
-PROJECT_ROOT = Path(__file__).resolve().parents[1]   # racine du repo
+PROJECT_ROOT = Path(__file__).resolve().parents[1] 
 PYTHON = sys.executable
 EXCEL_PATH = str(PROJECT_ROOT / "faker" / "Ecran (2).xlsx")
 ROUTER_HOST = "127.0.0.1"
@@ -37,7 +37,7 @@ def _stop_process():
 @app.post("/api/start")
 def api_start():
     data = request.get_json(force=True, silent=True) or {}
-    mode = data.get("mode", "blink")  # blink|chase|wave|gradient|solid|stars|image|vortex|plasma
+    mode = data.get("mode", "blink")  # blink|chase|wave|gradient|solid|stars|image|anim_test|fireworks
     seconds = str(data.get("seconds", 10))
     fps = str(data.get("fps", 25))
     color1 = data.get("color1", "255,0,0")
@@ -72,9 +72,9 @@ def api_start():
         if flipy:
             cmd.append("--flip-y")
 
-    elif mode == "vortex":
+    elif mode == "anim_test":
         cmd = [
-            PYTHON, "faker/vortex_rainbow.py",
+            PYTHON, "faker/anim_test.py",
             "--excel", EXCEL_PATH,
             "--host", ROUTER_HOST,
             "--port", ROUTER_PORT,
@@ -82,9 +82,9 @@ def api_start():
             "--fps", fps
         ]
 
-    elif mode == "plasma":
+    elif mode == "fireworks":
         cmd = [
-            PYTHON, "faker/plasma_rainbow.py",
+            PYTHON, "faker/fireworks.py",
             "--excel", EXCEL_PATH,
             "--host", ROUTER_HOST,
             "--port", ROUTER_PORT,
@@ -93,7 +93,6 @@ def api_start():
         ]
 
     else:
-        # modes animator: blink/chase/wave/gradient/solid
         cmd = [
             PYTHON, "faker/animator_cli.py",
             "--mode", mode,
