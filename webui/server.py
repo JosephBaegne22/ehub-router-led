@@ -4,14 +4,12 @@ from flask import Flask, request, jsonify, send_from_directory
 
 app = Flask(__name__, static_folder=".", static_url_path="")
 
-# --- Réglages par défaut ---
-PROJECT_ROOT = Path(__file__).resolve().parents[1]  
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 PYTHON = sys.executable
 EXCEL_PATH = str(PROJECT_ROOT / "faker" / "Ecran (2).xlsx")
 ROUTER_HOST = "127.0.0.1"
 ROUTER_PORT = "50000"
 
-# Processus d’animation courant (1 à la fois)
 _current_proc = None
 _proc_lock = threading.Lock()
 
@@ -33,11 +31,11 @@ def _stop_process():
                 pass
         _current_proc = None
 
-# --------- API ----------
+
 @app.post("/api/start")
 def api_start():
     data = request.get_json(force=True, silent=True) or {}
-    mode = data.get("mode", "blink")  # blink|chase|wave|gradient|solid|stars|image|fireworks|aurora
+    mode = data.get("mode", "blink")
     seconds = str(data.get("seconds", 10))
     fps = str(data.get("fps", 25))
     color1 = data.get("color1", "255,0,0")
@@ -72,39 +70,7 @@ def api_start():
         if flipy:
             cmd.append("--flip-y")
 
-            
-    elif mode == "plasma":
-        cmd = [
-            PYTHON, "faker/plasma_rainbow.py",
-            "--excel", EXCEL_PATH,
-            "--host", ROUTER_HOST,
-            "--port", ROUTER_PORT,
-            "--seconds", seconds,
-            "--fps", fps
-        ]
-
-    elif mode == "fireworks":
-        cmd = [
-            PYTHON, "faker/fireworks.py",
-            "--excel", EXCEL_PATH,
-            "--host", ROUTER_HOST,
-            "--port", ROUTER_PORT,
-            "--seconds", seconds,
-            "--fps", fps
-        ]
-
-    elif mode == "aurora":
-        cmd = [
-            PYTHON, "faker/aurora.py",
-            "--excel", EXCEL_PATH,
-            "--host", ROUTER_HOST,
-            "--port", ROUTER_PORT,
-            "--seconds", seconds,
-            "--fps", fps
-        ]
-
-    else:
-        # modes animator: blink/chase/wave/gradient/solid
+    elif mode in ["blink","wave","chase","gradient","solid"]:
         cmd = [
             PYTHON, "faker/animator_cli.py",
             "--mode", mode,
@@ -113,6 +79,34 @@ def api_start():
             "--seconds", seconds, "--fps", fps,
             "--color1", color1, "--color2", color2
         ]
+
+    elif mode == "fireworks":
+        cmd = [
+            PYTHON, "faker/fireworks.py",
+            "--excel", EXCEL_PATH,
+            "--host", ROUTER_HOST, "--port", ROUTER_PORT,
+            "--seconds", seconds, "--fps", fps
+        ]
+
+    elif mode == "aurora":
+        cmd = [
+            PYTHON, "faker/aurora.py",
+            "--excel", EXCEL_PATH,
+            "--host", ROUTER_HOST, "--port", ROUTER_PORT,
+            "--seconds", seconds, "--fps", fps
+        ]
+
+    elif mode == "lava":
+        cmd = [
+            PYTHON, "faker/lava.py",
+            "--excel", EXCEL_PATH,
+            "--host", ROUTER_HOST, "--port", ROUTER_PORT,
+            "--seconds", seconds,
+            "--fps", fps
+        ]
+
+    else:
+        return jsonify({"ok": False, "msg": f"Mode inconnu: {mode}"}), 400
 
     ok, msg = _start_process(cmd)
     return jsonify({"ok": ok, "msg": msg, "cmd": cmd}), (200 if ok else 409)
