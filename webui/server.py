@@ -1,4 +1,3 @@
-# webui/server.py
 import os, sys, subprocess, threading
 from pathlib import Path
 from flask import Flask, request, jsonify, send_from_directory
@@ -7,9 +6,9 @@ app = Flask(__name__, static_folder=".", static_url_path="")
 
 # --- Réglages par défaut ---
 PROJECT_ROOT = Path(__file__).resolve().parents[1]   # racine du repo
-PYTHON = sys.executable                               # interpréteur courant
+PYTHON = sys.executable
 EXCEL_PATH = str(PROJECT_ROOT / "faker" / "Ecran (2).xlsx")
-ROUTER_HOST = "127.0.0.1"                             # host eHuB (routeur)
+ROUTER_HOST = "127.0.0.1"
 ROUTER_PORT = "50000"
 
 # Processus d’animation courant (1 à la fois)
@@ -38,12 +37,12 @@ def _stop_process():
 @app.post("/api/start")
 def api_start():
     data = request.get_json(force=True, silent=True) or {}
-    mode = data.get("mode", "blink")          # blink|chase|wave|gradient|solid|stars|image
+    mode = data.get("mode", "blink")  # blink|chase|wave|gradient|solid|stars|image|vortex|plasma
     seconds = str(data.get("seconds", 10))
     fps = str(data.get("fps", 25))
     color1 = data.get("color1", "255,0,0")
     color2 = data.get("color2", "0,0,255")
-    density = str(data.get("density", 0.01))  # pour stars
+    density = str(data.get("density", 0.01))
     bg = data.get("bg", "4,8,16")
 
     if mode == "stars":
@@ -72,6 +71,26 @@ def api_start():
         ]
         if flipy:
             cmd.append("--flip-y")
+
+    elif mode == "vortex":
+        cmd = [
+            PYTHON, "faker/vortex_rainbow.py",
+            "--excel", EXCEL_PATH,
+            "--host", ROUTER_HOST,
+            "--port", ROUTER_PORT,
+            "--seconds", seconds,
+            "--fps", fps
+        ]
+
+    elif mode == "plasma":
+        cmd = [
+            PYTHON, "faker/plasma_rainbow.py",
+            "--excel", EXCEL_PATH,
+            "--host", ROUTER_HOST,
+            "--port", ROUTER_PORT,
+            "--seconds", seconds,
+            "--fps", fps
+        ]
 
     else:
         # modes animator: blink/chase/wave/gradient/solid
