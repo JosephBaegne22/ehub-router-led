@@ -5,7 +5,7 @@ from flask import Flask, request, jsonify, send_from_directory
 app = Flask(__name__, static_folder=".", static_url_path="")
 
 # --- Réglages par défaut ---
-PROJECT_ROOT = Path(__file__).resolve().parents[1] 
+PROJECT_ROOT = Path(__file__).resolve().parents[1]  
 PYTHON = sys.executable
 EXCEL_PATH = str(PROJECT_ROOT / "faker" / "Ecran (2).xlsx")
 ROUTER_HOST = "127.0.0.1"
@@ -37,7 +37,7 @@ def _stop_process():
 @app.post("/api/start")
 def api_start():
     data = request.get_json(force=True, silent=True) or {}
-    mode = data.get("mode", "blink")  # blink|chase|wave|gradient|solid|stars|image|anim_test|fireworks
+    mode = data.get("mode", "blink")  # blink|chase|wave|gradient|solid|stars|image|fireworks|aurora
     seconds = str(data.get("seconds", 10))
     fps = str(data.get("fps", 25))
     color1 = data.get("color1", "255,0,0")
@@ -72,9 +72,10 @@ def api_start():
         if flipy:
             cmd.append("--flip-y")
 
-    elif mode == "anim_test":
+            
+    elif mode == "plasma":
         cmd = [
-            PYTHON, "faker/anim_test.py",
+            PYTHON, "faker/plasma_rainbow.py",
             "--excel", EXCEL_PATH,
             "--host", ROUTER_HOST,
             "--port", ROUTER_PORT,
@@ -92,7 +93,18 @@ def api_start():
             "--fps", fps
         ]
 
+    elif mode == "aurora":
+        cmd = [
+            PYTHON, "faker/aurora.py",
+            "--excel", EXCEL_PATH,
+            "--host", ROUTER_HOST,
+            "--port", ROUTER_PORT,
+            "--seconds", seconds,
+            "--fps", fps
+        ]
+
     else:
+        # modes animator: blink/chase/wave/gradient/solid
         cmd = [
             PYTHON, "faker/animator_cli.py",
             "--mode", mode,
@@ -110,7 +122,6 @@ def api_stop():
     _stop_process()
     return jsonify({"ok": True})
 
-# --------- Page web ----------
 @app.get("/")
 def index():
     return send_from_directory(app.static_folder, "index.html")
