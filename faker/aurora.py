@@ -34,9 +34,9 @@ class AuroraRibbon:
     def frame(self, t: float) -> List[Tuple[int,int,int,int,int]]:
         ents: List[Tuple[int,int,int,int,int]] = []
         for x in range(self.width):
-            base = math.sin(t + self.offsets[x])  # oscillation
+            base = math.sin(t + self.offsets[x])
             for y in range(self.height):
-                brightness = max(0, math.sin((y/128.0 + base)*math.pi))  # dégradé vertical
+                brightness = max(0, math.sin((y/128.0 + base)*math.pi)) 
                 r = min(255, int(self.colors[x][0] * brightness))
                 g = min(255, int(self.colors[x][1] * brightness))
                 b = min(255, int(self.colors[x][2] * brightness))
@@ -44,9 +44,7 @@ class AuroraRibbon:
                 ents.append((eid, r, g, b, 0))
         return ents
 
-# ---------------- Main animation ----------------
 def play_aurora(excel: str, host: str, port: int, seconds: float, fps: float):
-    # fallback simple si excel non utilisé
     width = 128
     height = 128
     aurora = AuroraRibbon(width, height)
@@ -57,7 +55,6 @@ def play_aurora(excel: str, host: str, port: int, seconds: float, fps: float):
         t = time.time() - t0
         ents = aurora.frame(t)
 
-        # envoi en chunks eHuB
         u = 0
         for chunk in chunked(ents, 3000):
             pkt = pack_update(u, chunk)

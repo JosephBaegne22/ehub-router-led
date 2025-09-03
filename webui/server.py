@@ -80,6 +80,16 @@ def api_start():
             "--color1", color1, "--color2", color2
         ]
 
+    elif mode == "plasma":
+        cmd = [
+            PYTHON, "faker/plasma_rainbow.py",
+            "--excel", EXCEL_PATH,
+            "--host", ROUTER_HOST,
+            "--port", ROUTER_PORT,
+            "--seconds", seconds,
+            "--fps", fps
+        ]
+
     elif mode == "fireworks":
         cmd = [
             PYTHON, "faker/fireworks.py",
