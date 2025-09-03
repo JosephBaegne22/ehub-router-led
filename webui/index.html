@@ -22,11 +22,6 @@
         margin: 40px auto;
         padding: 0 16px;
       }
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 14px;
-      }
       .card {
         background: var(--card);
         border-radius: 16px;
@@ -51,13 +46,18 @@
         margin: 10px 0 6px;
       }
       input,
-      select {
+      select,
+      textarea {
         width: 100%;
         padding: 10px 12px;
         border-radius: 10px;
         border: 1px solid #22314a;
         background: #0f1524;
         color: #fff;
+        font-family: monospace;
+      }
+      textarea {
+        min-height: 140px;
       }
       .row {
         display: flex;
@@ -89,9 +89,6 @@
         background: #7f1d1d;
         border-color: #ef4444;
       }
-      small {
-        color: var(--muted);
-      }
       .footer {
         margin-top: 16px;
         color: var(--muted);
@@ -111,6 +108,16 @@
         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
         gap: 14px;
       }
+      #logbox {
+        background: #000;
+        color: #0f0;
+        font-family: monospace;
+        font-size: 13px;
+        padding: 10px;
+        height: 200px;
+        overflow-y: auto;
+        border-radius: 8px;
+      }
     </style>
   </head>
   <body>
@@ -127,28 +134,17 @@
         </div>
 
         <div class="card">
-          <h2>Couleurs (pour blink/gradient)</h2>
+          <h2>Couleurs (blink/gradient)</h2>
           <label>Couleur 1 (R,G,B)</label>
           <input id="color1" value="255,0,0" />
           <label>Couleur 2 (R,G,B)</label>
           <input id="color2" value="0,0,255" />
-          <small
-            >Utilisé par blink / gradient (optionnel pour
-            wave/chase/solid).</small
-          >
         </div>
 
         <div class="card">
           <h2>Ciel étoilé</h2>
-          <label>Densité (0.005 à 0.03 conseillé)</label>
-          <input
-            id="density"
-            type="number"
-            step="0.001"
-            value="0.01"
-            min="0.001"
-            max="0.1"
-          />
+          <label>Densité</label>
+          <input id="density" type="number" step="0.001" value="0.01" />
           <label>Fond (R,G,B)</label>
           <input id="bg" value="4,8,16" />
         </div>
@@ -162,12 +158,12 @@
           <button class="btn" onclick="start('chase')">Chase</button>
           <button class="btn" onclick="start('gradient')">Gradient</button>
           <button class="btn" onclick="start('solid')">Solid</button>
-          <button class="btn" onclick="start('stars')">Ciel étoilé</button>
-          <button class="btn" onclick="start('plasma')">Plasma Rainbow</button>
+          <button class="btn" onclick="start('stars')">Étoiles</button>
+          <button class="btn" onclick="start('plasma')">Plasma</button>
           <button class="btn" onclick="start('fireworks')">
             Feu d’artifice
           </button>
-          <button class="btn" onclick="start('aurora')">Aurore Boréale</button>
+          <button class="btn" onclick="start('aurora')">Aurore</button>
           <button class="btn" onclick="start('lava')">Lave</button>
           <button class="btn warn" onclick="stopAnim()">STOP</button>
         </div>
@@ -175,8 +171,8 @@
       </div>
 
       <div class="card" style="margin-top: 14px">
-        <h2>Personnages (images)</h2>
-        <div class="row" style="margin-top: 8px">
+        <h2>Images personnages</h2>
+        <div class="row">
           <button class="btn" onclick="startImage('assets/ryu.png')">
             Ryu
           </button>
@@ -187,10 +183,22 @@
             Guile
           </button>
         </div>
-        <small
-          >Conseil : images carrées 128×128, fond transparent si
-          possible.</small
-        >
+      </div>
+
+      <div class="card" style="margin-top: 14px">
+        <h2>Configuration projet</h2>
+        <textarea id="configBox"></textarea>
+        <div class="row" style="margin-top: 10px">
+          <button class="btn primary" onclick="saveConfig()">
+            Sauvegarder
+          </button>
+          <button class="btn" onclick="loadConfig()">Recharger</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 14px">
+        <h2>Logs système</h2>
+        <div id="logbox"></div>
       </div>
     </div>
 
@@ -198,35 +206,14 @@
       async function start(mode) {
         const seconds = Number(document.getElementById("seconds").value || 10);
         const fps = Number(document.getElementById("fps").value || 25);
-        const color1 = document.getElementById("color1").value || "255,0,0";
-        const color2 = document.getElementById("color2").value || "0,0,255";
-        const density = document.getElementById("density").value || "0.01";
-        const bg = document.getElementById("bg").value || "4,8,16";
-
-        const body = { mode, seconds, fps, color1, color2, density, bg };
-        const r = await fetch("/api/start", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-        const js = await r.json();
-        document.getElementById("status").textContent =
-          (js.ok ? "✔️ Démarré: " : "⚠️ ") + (js.msg || "");
-        if (!js.ok) console.warn(js);
-      }
-
-      async function startImage(imgPath) {
-        const seconds = Number(document.getElementById("seconds").value || 8);
-        const fps = Number(document.getElementById("fps").value || 12);
         const body = {
-          mode: "image",
-          image: imgPath,
+          mode,
           seconds,
           fps,
-          fit: "cover",
-          brightness: 0.7,
-          gamma: 2.0,
-          flipY: false,
+          color1: document.getElementById("color1").value,
+          color2: document.getElementById("color2").value,
+          density: document.getElementById("density").value,
+          bg: document.getElementById("bg").value,
         };
         const r = await fetch("/api/start", {
           method: "POST",
@@ -235,15 +222,73 @@
         });
         const js = await r.json();
         document.getElementById("status").textContent =
-          (js.ok ? "✔️ Démarré: " : "⚠️ ") + (js.msg || "");
-        if (!js.ok) console.warn(js);
+          (js.ok ? "✔️ " : "⚠️ ") + (js.msg || "");
+      }
+
+      async function startImage(imgPath) {
+        const body = {
+          mode: "image",
+          image: imgPath,
+          seconds: 8,
+          fps: 12,
+          fit: "cover",
+          brightness: 0.7,
+          gamma: 2.0,
+        };
+        const r = await fetch("/api/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const js = await r.json();
+        document.getElementById("status").textContent =
+          (js.ok ? "✔️ " : "⚠️ ") + (js.msg || "");
       }
 
       async function stopAnim() {
-        const r = await fetch("/api/stop", { method: "POST" });
-        const js = await r.json();
+        await fetch("/api/stop", { method: "POST" });
         document.getElementById("status").textContent = "⏹️ Arrêt demandé.";
       }
+
+      async function loadConfig() {
+        const r = await fetch("/config");
+        const js = await r.json();
+        if (js.ok) {
+          document.getElementById("configBox").value = JSON.stringify(
+            js.config,
+            null,
+            2
+          );
+        }
+      }
+
+      async function saveConfig() {
+        try {
+          const val = JSON.parse(document.getElementById("configBox").value);
+          const r = await fetch("/config", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(val),
+          });
+          const js = await r.json();
+          alert(js.ok ? "Config sauvegardée" : "Erreur: " + js.error);
+        } catch (e) {
+          alert("JSON invalide: " + e);
+        }
+      }
+
+      function startLogs() {
+        const box = document.getElementById("logbox");
+        const evt = new EventSource("/logs/stream");
+        evt.onmessage = (ev) => {
+          box.textContent += ev.data + "\n";
+          box.scrollTop = box.scrollHeight;
+        };
+      }
+
+      // init
+      loadConfig();
+      startLogs();
     </script>
   </body>
 </html>

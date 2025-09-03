@@ -76,6 +76,7 @@ def play_fireworks(excel: str, host: str, port: int, seconds: float, fps: float)
     fireworks: List[Firework] = []
     t0 = time.time()
     dt = 1.0 / fps
+    frame_count = 0
 
     while time.time() - t0 < seconds:
         ents: List[Tuple[int,int,int,int,int]] = []
@@ -94,6 +95,9 @@ def play_fireworks(excel: str, host: str, port: int, seconds: float, fps: float)
             send_udp(pkt, host, int(port))
             u += 1
 
+        frame_count += 1
+        # log chaque frame pour WebUI
+        print(f"[FIREWORK] Frame {frame_count}, Sparks={len(ents)}", flush=True)
         time.sleep(dt)
 
 if __name__ == "__main__":

@@ -3,6 +3,7 @@ from typing import List, Tuple
 
 MAGIC = b"eHuB"
 
+# ---------------- Helpers eHuB ----------------
 def pack_update(universe: int, entities: List[Tuple[int,int,int,int,int]]) -> bytes:
     payload = bytearray()
     for eid, r, g, b, w in entities:
@@ -24,6 +25,7 @@ def chunked(seq, n):
     for i in range(0, len(seq), n):
         yield seq[i:i+n]
 
+# ---------------- Aurora Ribbon ----------------
 class AuroraRibbon:
     def __init__(self, width=128, height=128):
         self.width = width
@@ -36,7 +38,7 @@ class AuroraRibbon:
         for x in range(self.width):
             base = math.sin(t + self.offsets[x])
             for y in range(self.height):
-                brightness = max(0, math.sin((y/128.0 + base)*math.pi)) 
+                brightness = max(0, math.sin((y/128.0 + base)*math.pi))
                 r = min(255, int(self.colors[x][0] * brightness))
                 g = min(255, int(self.colors[x][1] * brightness))
                 b = min(255, int(self.colors[x][2] * brightness))
@@ -44,12 +46,14 @@ class AuroraRibbon:
                 ents.append((eid, r, g, b, 0))
         return ents
 
+# ---------------- Play Aurora ----------------
 def play_aurora(excel: str, host: str, port: int, seconds: float, fps: float):
     width = 128
     height = 128
     aurora = AuroraRibbon(width, height)
     dt = 1.0 / fps
     t0 = time.time()
+    frame_count = 0
 
     while time.time() - t0 < seconds:
         t = time.time() - t0
@@ -61,8 +65,12 @@ def play_aurora(excel: str, host: str, port: int, seconds: float, fps: float):
             send_udp(pkt, host, int(port))
             u += 1
 
+        frame_count += 1
+        # log chaque frame pour WebUI
+        print(f"[AURORA] Frame {frame_count}", flush=True)
         time.sleep(dt)
 
+# ---------------- Main ----------------
 if __name__ == "__main__":
     import argparse
     ap = argparse.ArgumentParser()

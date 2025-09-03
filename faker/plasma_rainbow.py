@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import struct, gzip, socket, time, math
 from typing import List, Tuple
 
@@ -45,7 +46,6 @@ def build_plasma(columns: List[List[int]], t: float) -> List[Tuple[int,int,int,i
         col = columns[x]
         for y in range(128):
             eid = col[y]
-            # effet plasma combinant sin/cos pour chaque LED
             h = (math.sin(x*0.1 + t) + math.cos(y*0.15 + t) + math.sin((x+y)*0.05 + t))/4 + 0.5
             rgb = hsv_to_rgb(h % 1.0, 1.0, 0.9)
             ents.append((eid, *rgb, 0))
@@ -53,13 +53,14 @@ def build_plasma(columns: List[List[int]], t: float) -> List[Tuple[int,int,int,i
 
 def play_plasma(excel: str, host: str, port: str, seconds: float, fps: float):
     import pandas as pd
-    df = pd.read_excel(excel, sheet_name="eHuB")
+    df = pd.read_excel(excel, sheet_name="eHuB")  # lecture pour vérifier le fichier
     columns = []
     for x in range(128):
-        columns.append(list(range(x*128, x*128+128))) 
+        columns.append(list(range(x*128, x*128+128)))
 
     dt = 1.0 / fps
     t0 = time.time()
+    frame_count = 0
     while time.time() - t0 < seconds:
         t = time.time() - t0
         ents = build_plasma(columns, t)
@@ -68,15 +69,18 @@ def play_plasma(excel: str, host: str, port: str, seconds: float, fps: float):
             pkt = pack_update(u, chunk)
             send_udp(pkt, host, int(port))
             u += 1
+        frame_count += 1
+        # Log chaque frame pour affichage dans webui
+        print(f"[PLASMA] Frame {frame_count}, t={t:.2f}, LEDs={len(ents)}", flush=True)
         time.sleep(dt)
 
 if __name__ == "__main__":
     import argparse
     ap = argparse.ArgumentParser()
-    ap.add_argument("--excel", required=True)
-    ap.add_argument("--host", default="127.0.0.1")
-    ap.add_argument("--port", default="50000")
-    ap.add_argument("--seconds", type=float, default=20.0)
-    ap.add_argument("--fps", type=float, default=30.0)
+    ap.add_argument("--excel", required=True, help="Chemin vers le fichier Excel")
+    ap.add_argument("--host", default="127.0.0.1", help="IP eHuB")
+    ap.add_argument("--port", default="50000", help="Port UDP eHuB")
+    ap.add_argument("--seconds", type=float, default=20.0, help="Durée de l'animation")
+    ap.add_argument("--fps", type=float, default=30.0, help="Framerate")
     args = ap.parse_args()
     play_plasma(args.excel, args.host, args.port, args.seconds, args.fps)

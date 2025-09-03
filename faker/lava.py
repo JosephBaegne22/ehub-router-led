@@ -40,6 +40,7 @@ def lava_frame(t: float, width=128, height=128) -> List[Tuple[int,int,int,int,in
 def play_lava(excel: str, host: str, port: str, seconds: float, fps: float):
     dt = 1.0 / fps
     t0 = time.time()
+    frame_count = 0
     while time.time() - t0 < seconds:
         t = time.time() - t0
         ents = lava_frame(t)
@@ -50,6 +51,9 @@ def play_lava(excel: str, host: str, port: str, seconds: float, fps: float):
             send_udp(pkt, host, int(port))
             u += 1
 
+        frame_count += 1
+        # log chaque frame pour WebUI
+        print(f"[LAVA] Frame {frame_count}, t={t:.2f}, LEDs={len(ents)}", flush=True)
         time.sleep(dt)
 
 if __name__ == "__main__":
