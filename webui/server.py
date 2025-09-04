@@ -3,21 +3,43 @@ import sys
 import subprocess
 import threading
 from pathlib import Path
-from logging.handlers import RotatingFileHandler
+import traceback
+import logging
 from flask import Flask, request, jsonify, send_from_directory, Response, abort
 from werkzeug.utils import secure_filename
 
+# Ajouter le dossier parent pour les imports relatifs
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from animations import ANIMATIONS
 
+# -----------------------
+# Logger
+# -----------------------
+logger = logging.getLogger("ehub-router-led")
+logger.setLevel(logging.INFO)
+handler = logging.StreamHandler()
+formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
+# -----------------------
+# Flask app
+# -----------------------
 app = Flask(__name__, static_folder=".", static_url_path="")
 
+# -----------------------
+# Constantes du projet
+# -----------------------
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+BASE_DIR = Path(__file__).parent.resolve()
 PYTHON = sys.executable
 EXCEL_PATH = str(PROJECT_ROOT / "faker" / "Ecran (2).xlsx")
 ROUTER_HOST = "127.0.0.1"
 ROUTER_PORT = 50000
 
+# -----------------------
+# Gestion process animation
+# -----------------------
 _current_proc = None
 _proc_lock = threading.Lock()
 
@@ -27,6 +49,7 @@ def _start_process(cmd):
         if _current_proc and _current_proc.poll() is None:
             return False, "Une animation est déjà en cours."
         _current_proc = subprocess.Popen(cmd, cwd=str(PROJECT_ROOT))
+        logger.info(f"Animation démarrée avec cmd: {cmd}")
         return True, "OK"
 
 def _stop_process():
@@ -36,10 +59,13 @@ def _stop_process():
             try: 
                 _current_proc.terminate()
                 logger.info("Animation stoppée")
-            except Exception:
-                pass
+            except Exception as e:
+                logger.error(f"Erreur lors de l'arrêt du process: {e}")
         _current_proc = None
 
+# -----------------------
+# Routes API
+# -----------------------
 @app.get("/api/animations")
 def get_animations():
     """Renvoie la liste des animations disponibles pour l’UI web."""
