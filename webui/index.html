@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>LED Controller – Animations</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root { --bg:#0b0f17; --card:#121826; --muted:#9fb0c5; --accent:#2dd4bf; }
+    body{ margin:0; font-family:system-ui,Segoe UI,Roboto,Arial; background:var(--bg); color:#e6edf5; }
+    .wrap{ max-width:980px; margin:40px auto; padding:0 16px; }
+    .grid{ display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap:14px; }
+    .card{ background:var(--card); border-radius:16px; padding:18px; box-shadow:0 8px 24px rgba(0,0,0,.35); }
+    h1{ font-weight:700; font-size:24px; margin:0 0 12px; }
+    h2{ font-weight:650; font-size:18px; margin:0 0 10px; color:var(--muted); }
+    label{ display:block; font-size:13px; color:var(--muted); margin:10px 0 6px; }
+    input{ width:100%; padding:10px 12px; border-radius:10px; border:1px solid #22314a; background:#0f1524; color:#fff; }
+    .row{ display:flex; gap:10px; flex-wrap:wrap; }
+    .btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px;
+          padding:10px 14px; border-radius:12px; border:1px solid #23314b; background:#111827;
+          color:#fff; cursor:pointer; transition:transform .06s ease; }
+    .btn:hover{ transform:translateY(-1px); }
+    .btn.primary{ background:linear-gradient(135deg,#06b6d4,#22d3ee); color:#041016; font-weight:700; }
+    .btn.warn{ background:#7f1d1d; border-color:#ef4444; }
+    small{ color:var(--muted); }
+    .footer{ margin-top:16px; color:var(--muted); font-size:12px; }
+    .pill{ display:inline-block; background:#0d213a; color:#b7c7de; padding:4px 8px; border-radius:999px; font-size:12px; margin-left:8px;}
+    .cols{ display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:14px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>LED Controller – Animations <span class="pill">Local UI</span></h1>
+
+    <div class="cols">
+      <div class="card">
+        <h2>Paramètres</h2>
+        <label>Durée (secondes)</label>
+        <input id="seconds" type="number" value="10" min="1" />
+        <label>FPS</label>
+        <input id="fps" type="number" value="25" min="5" max="60" />
+      </div>
+
+      <div class="card">
+        <h2>Couleurs (blink/gradient)</h2>
+        <label>Couleur 1 (R,G,B)</label>
+        <input id="color1" value="255,0,0" />
+        <label>Couleur 2 (R,G,B)</label>
+        <input id="color2" value="0,0,255" />
+      </div>
+
+      <div class="card">
+        <h2>Ciel étoilé</h2>
+        <label>Densité (0.005 à 0.03 conseillé)</label>
+        <input id="density" type="number" step="0.001" value="0.01" min="0.001" max="0.1" />
+        <label>Fond (R,G,B)</label>
+        <input id="bg" value="4,8,16" />
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h2>Lancer une animation</h2>
+      <div class="row" style="margin-top:8px">
+        <button class="btn primary" onclick="start('blink')">Blink</button>
+        <button class="btn" onclick="start('wave')">Wave</button>
+        <button class="btn" onclick="start('chase')">Chase</button>
+        <button class="btn" onclick="start('gradient')">Gradient</button>
+        <button class="btn" onclick="start('solid')">Solid</button>
+        <button class="btn" onclick="start('stars')">Ciel étoilé</button>
+        <button class="btn" onclick="stopAnim()">STOP</button>
+      </div>
+      <div id="status" class="footer">Prêt.</div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h2>Personnages (images)</h2>
+      <div class="row" style="margin-top:8px">
+        <button class="btn" onclick="startImage('assets/ryu.png')">Ryu</button>
+        <button class="btn" onclick="startImage('assets/ken.png')">Ken</button>
+        <button class="btn" onclick="startImage('assets/guile.png')">Guile</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h2>Jeu : Snake</h2>
+      <div class="row" style="margin-top:8px">
+        <button class="btn" onclick="startSnake()">Démarrer Snake</button>
+        <button class="btn warn" onclick="stopAnim()">Stop</button>
+      </div>
+      <small>Quand Snake est actif, la page capture les **flèches** du clavier (↑ ↓ ← →) pour diriger le serpent. Appuie sur la page pour lui donner le focus.</small>
+    </div>
+  </div>
+
+  <script>
+    // ---- Animations standards / image ----
+    async function start(mode){
+      const seconds = Number(document.getElementById('seconds').value || 10);
+      const fps = Number(document.getElementById('fps').value || 25);
+      const color1 = document.getElementById('color1').value || "255,0,0";
+      const color2 = document.getElementById('color2').value || "0,0,255";
+      const density = document.getElementById('density').value || "0.01";
+      const bg = document.getElementById('bg').value || "4,8,16";
+      const body = { mode, seconds, fps, color1, color2, density, bg };
+      const r = await fetch('/api/start', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      const js = await r.json();
+      document.getElementById('status').textContent = (js.ok ? '✔️ Démarré: ' : '⚠️ ') + (js.msg || '');
+    }
+    async function startImage(imgPath){
+      const seconds = Number(document.getElementById('seconds').value || 8);
+      const fps = Number(document.getElementById('fps').value || 12);
+      const body = { mode:'image', image: imgPath, seconds, fps, fit:'cover', brightness:0.7, gamma:2.0, flipY:false };
+      const r = await fetch('/api/start', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      const js = await r.json();
+      document.getElementById('status').textContent = (js.ok ? '✔️ Démarré: ' : '⚠️ ') + (js.msg || '');
+    }
+    async function stopAnim(){
+      const r = await fetch('/api/stop', { method:'POST' });
+      const js = await r.json();
+      document.getElementById('status').textContent = '⏹️ Arrêt demandé.';
+      snakeActive = false;
+    }
+
+    // ---- Snake ----
+    let snakeActive = false;
+
+    async function startSnake(){
+      // lance le process snake_remote.py via /api/start
+      const r = await fetch('/api/start', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ mode:'snake', tick: 8.0 }) });
+      const js = await r.json();
+      if (js.ok){
+        document.getElementById('status').textContent = '🐍 Snake démarré — utilise les flèches du clavier';
+        snakeActive = true;
+      } else {
+        document.getElementById('status').textContent = '⚠️ ' + (js.msg || 'Impossible de démarrer Snake');
+      }
+    }
+
+    async function sendSnakeDir(dir){
+      await fetch('/api/snake/dir', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ dir }) });
+    }
+
+    // Capture clavier quand snake actif
+    window.addEventListener('keydown', (e) => {
+      if (!snakeActive) return;
+      const key = e.key;
+      if (key === 'ArrowUp'){ e.preventDefault(); sendSnakeDir('UP'); }
+      else if (key === 'ArrowDown'){ e.preventDefault(); sendSnakeDir('DOWN'); }
+      else if (key === 'ArrowLeft'){ e.preventDefault(); sendSnakeDir('LEFT'); }
+      else if (key === 'ArrowRight'){ e.preventDefault(); sendSnakeDir('RIGHT'); }
+    });
+  </script>
+</body>
+</html>
