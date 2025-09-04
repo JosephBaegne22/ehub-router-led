@@ -1,6 +1,6 @@
 # faker/animator_cli.py
 import argparse
-from animator import run_animation
+from .animator import run_animation
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="Animations eHuB (blink/chase/wave/gradient)")

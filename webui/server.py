@@ -1,9 +1,17 @@
+<<<<<<< Updated upstream
 import os, sys, subprocess, threading, time, yaml, logging, shutil, traceback
+=======
+import os
+import sys
+import subprocess
+import threading
+>>>>>>> Stashed changes
 from pathlib import Path
 from logging.handlers import RotatingFileHandler
 from flask import Flask, request, jsonify, send_from_directory, Response, abort
 from werkzeug.utils import secure_filename
 
+<<<<<<< Updated upstream
 # -----------------------
 # CONFIG
 # -----------------------
@@ -157,6 +165,19 @@ def logs_recent():
 # -----------------------
 # Process handling (start/stop animations)
 # -----------------------
+=======
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from animations import ANIMATIONS
+
+app = Flask(__name__, static_folder=".", static_url_path="")
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+PYTHON = sys.executable
+EXCEL_PATH = str(PROJECT_ROOT / "faker" / "Ecran (2).xlsx")
+ROUTER_HOST = "127.0.0.1"
+ROUTER_PORT = 50000
+
+>>>>>>> Stashed changes
 _current_proc = None
 _proc_lock = threading.Lock()
 
@@ -164,6 +185,7 @@ def _start_process(cmd):
     global _current_proc
     with _proc_lock:
         if _current_proc and _current_proc.poll() is None:
+<<<<<<< Updated upstream
             return False, "Une animation est déjà en cours. Clique d'abord sur STOP."
         try:
             # Lancer le processus et capturer stdout/stderr
@@ -188,19 +210,31 @@ def _start_process(cmd):
                 logger.exception("Erreur lecture stdout animation")
 
         threading.Thread(target=reader, args=(_current_proc,), daemon=True).start()
+=======
+            return False, "Une animation est déjà en cours."
+        _current_proc = subprocess.Popen(cmd, cwd=str(PROJECT_ROOT))
+>>>>>>> Stashed changes
         return True, "OK"
 
 def _stop_process():
     global _current_proc
     with _proc_lock:
         if _current_proc and _current_proc.poll() is None:
-            try:
+            try: 
                 _current_proc.terminate()
                 logger.info("Animation stoppée")
             except Exception:
                 pass
         _current_proc = None
 
+<<<<<<< Updated upstream
+=======
+@app.get("/api/animations")
+def get_animations():
+    """Renvoie la liste des animations disponibles pour l’UI web."""
+    return jsonify({k: v["desc"] for k,v in ANIMATIONS.items()})
+
+>>>>>>> Stashed changes
 @app.post("/api/start")
 def api_start():
     data = request.get_json(force=True, silent=True) or {}
@@ -213,6 +247,7 @@ def api_start():
     bg = data.get("bg", "4,8,16")
 
     if mode == "stars":
+<<<<<<< Updated upstream
         cmd = [PYTHON, "faker/stars_player.py",
                "--excel", EXCEL_PATH, "--host", ROUTER_HOST, "--port", ROUTER_PORT,
                "--seconds", seconds, "--fps", fps,
@@ -254,6 +289,25 @@ def api_start():
                "--seconds", seconds, "--fps", fps]
     else:
         return jsonify(ok=False, msg=f"Mode inconnu: {mode}"), 400
+=======
+        cmd = [
+            PYTHON, "faker/stars_player.py",
+            "--excel", EXCEL_PATH,
+            "--host", ROUTER_HOST, "--port", str(ROUTER_PORT),
+            "--seconds", seconds, "--fps", fps,
+            "--density", density, "--bg", bg,
+            "--chunk", "3000"
+        ]
+    else:
+        cmd = [
+            PYTHON, "faker/animator_cli.py",
+            "--mode", mode,
+            "--excel", EXCEL_PATH,
+            "--host", ROUTER_HOST, "--port", str(ROUTER_PORT),
+            "--seconds", seconds, "--fps", fps,
+            "--color1", color1, "--color2", color2
+        ]
+>>>>>>> Stashed changes
 
     ok, msg = _start_process(cmd)
     return jsonify(ok=ok, msg=msg, cmd=cmd), (200 if ok else 409)
@@ -263,9 +317,12 @@ def api_stop():
     _stop_process()
     return jsonify(ok=True)
 
+<<<<<<< Updated upstream
 # -----------------------
 # Index
 # -----------------------
+=======
+>>>>>>> Stashed changes
 @app.get("/")
 def index():
     return send_from_directory(BASE_DIR, "index.html")
@@ -283,5 +340,9 @@ def handle_exception(e):
 # Run
 # -----------------------
 if __name__ == "__main__":
+<<<<<<< Updated upstream
     logger.info("Démarrage webui server.py")
     app.run(host="127.0.0.1", port=8000, debug=False, threaded=True)
+=======
+    app.run(host="127.0.0.1", port=8000, debug=False)
+>>>>>>> Stashed changes

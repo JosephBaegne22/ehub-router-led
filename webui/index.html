@@ -2,7 +2,11 @@
 <html lang="fr">
   <head>
     <meta charset="utf-8" />
+<<<<<<< Updated upstream
     <title>LED Controller – Animations</title>
+=======
+    <title>LED Controller</title>
+>>>>>>> Stashed changes
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
       :root {
@@ -22,6 +26,14 @@
         margin: 40px auto;
         padding: 0 16px;
       }
+<<<<<<< Updated upstream
+=======
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 14px;
+      }
+>>>>>>> Stashed changes
       .card {
         background: var(--card);
         border-radius: 16px;
@@ -46,18 +58,25 @@
         margin: 10px 0 6px;
       }
       input,
+<<<<<<< Updated upstream
       select,
       textarea {
+=======
+      select {
+>>>>>>> Stashed changes
         width: 100%;
         padding: 10px 12px;
         border-radius: 10px;
         border: 1px solid #22314a;
         background: #0f1524;
         color: #fff;
+<<<<<<< Updated upstream
         font-family: monospace;
       }
       textarea {
         min-height: 140px;
+=======
+>>>>>>> Stashed changes
       }
       .row {
         display: flex;
@@ -88,6 +107,13 @@
       .btn.warn {
         background: #7f1d1d;
         border-color: #ef4444;
+<<<<<<< Updated upstream
+=======
+        font-weight: 700;
+      }
+      small {
+        color: var(--muted);
+>>>>>>> Stashed changes
       }
       .footer {
         margin-top: 16px;
@@ -108,6 +134,7 @@
         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
         gap: 14px;
       }
+<<<<<<< Updated upstream
       #logbox {
         background: #000;
         color: #0f0;
@@ -118,6 +145,8 @@
         overflow-y: auto;
         border-radius: 8px;
       }
+=======
+>>>>>>> Stashed changes
     </style>
   </head>
   <body>
@@ -132,6 +161,7 @@
           <label>FPS</label>
           <input id="fps" type="number" value="25" min="5" max="60" />
         </div>
+<<<<<<< Updated upstream
 
         <div class="card">
           <h2>Couleurs (blink/gradient)</h2>
@@ -182,10 +212,39 @@
           <button class="btn" onclick="startImage('assets/guile.png')">
             Guile
           </button>
+=======
+
+        <div class="card">
+          <h2>Couleurs (pour blink/gradient)</h2>
+          <label>Couleur 1</label>
+          <input id="color1" type="color" value="#ff0000" />
+          <label>Couleur 2</label>
+          <input id="color2" type="color" value="#0000ff" />
+          <small
+            >Utilisé par blink / gradient (optionnel pour
+            wave/chase/solid).</small
+          >
+        </div>
+
+        <div class="card">
+          <h2>Ciel étoilé</h2>
+          <label>Densité (0.005 à 0.03 conseillé)</label>
+          <input
+            id="density"
+            type="number"
+            step="0.001"
+            value="0.01"
+            min="0.001"
+            max="0.1"
+          />
+          <label>Fond</label>
+          <input id="bg" type="color" value="#040810" />
+>>>>>>> Stashed changes
         </div>
       </div>
 
       <div class="card" style="margin-top: 14px">
+<<<<<<< Updated upstream
         <h2>Configuration projet</h2>
         <textarea id="configBox"></textarea>
         <div class="row" style="margin-top: 10px">
@@ -199,10 +258,40 @@
       <div class="card" style="margin-top: 14px">
         <h2>Logs système</h2>
         <div id="logbox"></div>
+=======
+        <h2>Lancer une animation</h2>
+        <div class="row" style="margin-top: 8px" id="animation-buttons">
+          <!-- Boutons dynamiques -->
+        </div>
+        <div class="row" style="margin-top: 12px">
+          <button class="btn warn" onclick="stopAnim()">⏹️ STOP</button>
+        </div>
+        <div id="status" class="footer">Prêt.</div>
+      </div>
+
+      <div class="card" style="margin-top: 14px">
+        <h2>Personnages (images)</h2>
+        <div class="row" style="margin-top: 8px">
+          <button class="btn" onclick="startImage('assets/ryu.png')">
+            Ryu
+          </button>
+          <button class="btn" onclick="startImage('assets/ken.png')">
+            Ken
+          </button>
+          <button class="btn" onclick="startImage('assets/guile.png')">
+            Guile
+          </button>
+        </div>
+        <small
+          >Conseil : images carrées 128×128 (ou plus), fond transparent si
+          possible.</small
+        >
+>>>>>>> Stashed changes
       </div>
     </div>
 
     <script>
+<<<<<<< Updated upstream
       async function start(mode) {
         const seconds = Number(document.getElementById("seconds").value || 10);
         const fps = Number(document.getElementById("fps").value || 25);
@@ -235,6 +324,44 @@
           brightness: 0.7,
           gamma: 2.0,
         };
+=======
+      function hexToRgb(hex) {
+        hex = hex.replace("#", "");
+        const bigint = parseInt(hex, 16);
+        const r = (bigint >> 16) & 255;
+        const g = (bigint >> 8) & 255;
+        const b = bigint & 255;
+        return `${r},${g},${b}`;
+      }
+
+      async function loadAnimations() {
+        const res = await fetch("/api/animations");
+        const data = await res.json();
+        const container = document.getElementById("animation-buttons");
+        container.innerHTML = "";
+        for (let key in data) {
+          const btn = document.createElement("button");
+          btn.className = key === "blink" ? "btn primary" : "btn";
+          btn.textContent = key;
+          btn.onclick = () => start(key);
+          container.appendChild(btn);
+        }
+      }
+
+      async function start(mode) {
+        const seconds = Number(document.getElementById("seconds").value || 10);
+        const fps = Number(document.getElementById("fps").value || 25);
+        const color1 = hexToRgb(
+          document.getElementById("color1").value || "#ff0000"
+        );
+        const color2 = hexToRgb(
+          document.getElementById("color2").value || "#0000ff"
+        );
+        const density = document.getElementById("density").value || "0.01";
+        const bg = hexToRgb(document.getElementById("bg").value || "#040810");
+
+        const body = { mode, seconds, fps, color1, color2, density, bg };
+>>>>>>> Stashed changes
         const r = await fetch("/api/start", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -242,6 +369,7 @@
         });
         const js = await r.json();
         document.getElementById("status").textContent =
+<<<<<<< Updated upstream
           (js.ok ? "✔️ " : "⚠️ ") + (js.msg || "");
       }
 
@@ -289,6 +417,41 @@
       // init
       loadConfig();
       startLogs();
+=======
+          (js.ok ? "✔️ Démarré: " : "⚠️ ") + (js.msg || "");
+      }
+
+      async function startImage(imgPath) {
+        const seconds = Number(document.getElementById("seconds").value || 8);
+        const fps = Number(document.getElementById("fps").value || 12);
+        const body = {
+          mode: "image",
+          image: imgPath,
+          seconds,
+          fps,
+          fit: "cover",
+          brightness: 0.7,
+          gamma: 2.0,
+          flipY: false,
+        };
+        const r = await fetch("/api/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const js = await r.json();
+        document.getElementById("status").textContent =
+          (js.ok ? "✔️ Démarré: " : "⚠️ ") + (js.msg || "");
+      }
+
+      async function stopAnim() {
+        const r = await fetch("/api/stop", { method: "POST" });
+        await r.json();
+        document.getElementById("status").textContent = "⏹️ Arrêt demandé.";
+      }
+
+      window.onload = loadAnimations;
+>>>>>>> Stashed changes
     </script>
   </body>
 </html>
